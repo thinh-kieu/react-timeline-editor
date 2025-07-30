@@ -1,6 +1,11 @@
 ---
 title: 网格吸附
 order: 3
+nav:
+  title: 示例
+  order: 4
+group:
+  title: 编辑器示例
 ---
 
 

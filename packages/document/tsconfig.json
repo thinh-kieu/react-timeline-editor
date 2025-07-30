@@ -5,12 +5,11 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "jsx": "react",
-    "baseUrl": "../",
+    "baseUrl": "./",
     "strict": false,
     "paths": {
-      "@xzdarcy/react-timeline-editor": ["src/index.tsx"],
-       "@@/*": [".dumi/tmp/*"]
+      "@@/*": ["./.dumi/tmp/*"],
+      "@xzdarcy/react-timeline-editor": ["../timeline/src/index.tsx"]
     },
-    "allowSyntheticDefaultImports": true
   },
 }

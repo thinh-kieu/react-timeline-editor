@@ -1,6 +1,11 @@
 ---
 title: 滚动同步
-order: 7
+order: 10
+nav:
+  title: 示例
+  order: 4
+group:
+  title: 编辑器示例
 ---
 
 ### 滚动同步

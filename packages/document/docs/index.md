@@ -1,6 +1,9 @@
 ---
 title: 介绍
-toc: 'menu'
+order: 1
+nav:
+  title: 指南
+  order: 1
 ---
 
 
@@ -42,5 +45,5 @@ export const TimelineEditor = () => {
 ```
 
 ## Props
-<API hideTitle src="../src/components/timeline.tsx"></API>
+<API id="Timeline" type="props"></API>
 

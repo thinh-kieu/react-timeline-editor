@@ -10,8 +10,6 @@
     "baseUrl": "./",
     "strict": false,
     "paths": {
-      "@/*": ["src/*"],
-      "@@/*": ["src/.umi/*"],
       "react": [ "./node_modules/@types/react"]
     },
     "allowSyntheticDefaultImports": true

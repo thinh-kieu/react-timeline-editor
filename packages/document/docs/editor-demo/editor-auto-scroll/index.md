@@ -1,6 +1,11 @@
 ---
 title: 自动滚动
 order: 9
+nav:
+  title: 示例
+  order: 4
+group:
+  title: 编辑器示例
 ---
 
 ### 自动滚动

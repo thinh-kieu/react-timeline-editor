@@ -7,9 +7,14 @@
     "type": "git",
     "url": "git+https://github.com/xzdarcy/react-timeline-editor.git"
   },
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "installConfig": {
+    "hoistingLimits": "workspaces"
+  },
   "packageManager": "yarn@4.9.2",
   "scripts": {
     "docs": "yarn workspace @xzdarcy/docs run",
