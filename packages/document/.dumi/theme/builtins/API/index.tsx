@@ -311,23 +311,23 @@ const API: FC<{
       <Table>
         <thead>
           <tr>
-            <th>{intl.formatMessage({ id: 'api.component.name' })}</th>
-            <th>{intl.formatMessage({ id: 'api.component.description' })}</th>
-            <th>{intl.formatMessage({ id: 'api.component.type' })}</th>
-            {type === 'props' && <th>{intl.formatMessage({ id: 'api.component.default' })}</th>}
+            <th className="dumi-default-api-name">{intl.formatMessage({ id: 'api.component.name' })}</th>
+            <th className="dumi-default-api-description">{intl.formatMessage({ id: 'api.component.description' })}</th>
+            <th className="dumi-default-api-type">{intl.formatMessage({ id: 'api.component.type' })}</th>
+            {type === 'props' && <th className="dumi-default-api-default">{intl.formatMessage({ id: 'api.component.default' })}</th>}
           </tr>
         </thead>
         <tbody>
           {Object.keys(properties).length ? (
             Object.entries(properties).map(([name, prop]) => (
               <tr key={name}>
-                <td>{releaseInfo[name] ? <APIRelease name={name} info={releaseInfo[name]} /> : name}</td>
-                <td>{prop.description || '--'}</td>
-                <td>
+                <td className="dumi-default-api-name">{releaseInfo[name] ? <APIRelease name={name} info={releaseInfo[name]} /> : name}</td>
+                <td className="dumi-default-api-description">{prop.description || '--'}</td>
+                <td className="dumi-default-api-type">
                   <APIType {...prop} />
                 </td>
                 {type === 'props' && (
-                  <td>
+                  <td className="dumi-default-api-default">
                     <code>{definition.propsConfig.required?.includes(name) ? intl.formatMessage({ id: 'api.component.required' }) : JSON.stringify(prop.default) || '--'}</code>
                   </td>
                 )}

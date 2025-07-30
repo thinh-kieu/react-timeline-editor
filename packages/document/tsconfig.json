@@ -7,6 +7,7 @@
     "jsx": "react",
     "baseUrl": "./",
     "strict": false,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "@@/*": ["./.dumi/tmp/*"],
       "@xzdarcy/react-timeline-editor": ["../timeline/src/index.tsx"]
