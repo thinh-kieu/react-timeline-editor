@@ -5,7 +5,8 @@ node_modules
 /npm-debug.log*
 /yarn-error.log
 /index.zip
-/.yarn
+/.yarn/cache
+/.yarn/install-state.gz
 
 # production
 dist
