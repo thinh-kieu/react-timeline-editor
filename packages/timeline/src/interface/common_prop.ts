@@ -1,7 +1,7 @@
-import { EditData } from "./timeline";
+import { EditData, RequiredEditData } from "./timeline";
 
 /** 组件公共参数 */
-export interface CommonProp extends EditData {
+export interface CommonProp extends RequiredEditData {
   /** 刻度个数 */
   scaleCount: number;
   /** 设置刻度个数 */

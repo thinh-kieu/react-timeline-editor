@@ -206,7 +206,7 @@ export interface EditData {
 
 export interface TimelineState {
   /** dom节点 */
-  target: HTMLElement;
+  target: HTMLElement | null;
   /** 运行监听器 */
   listener: Emitter<EventTypes>;
   /** 是否正在播放 */
@@ -274,3 +274,10 @@ export interface TimelineEditor extends EditData {
    */
   onChange?: (editorData: TimelineRow[]) => void | boolean;
 }
+
+// 定义一个工具类型，将指定属性变为必选
+export type RequiredPick<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
+export type RequiredEditData = RequiredPick<EditData, 'editorData' | 'effects' | 'scale' | 'scaleSplitCount' | 'scaleWidth' | 'startLeft' | 'minScaleCount' | 'maxScaleCount' | 'rowHeight'>;
+
+export type RequiredTimelineEditor = RequiredPick<TimelineEditor, 'scrollTop'> & RequiredEditData;

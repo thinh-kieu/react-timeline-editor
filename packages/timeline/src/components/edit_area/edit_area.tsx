@@ -25,7 +25,7 @@ export type EditAreaProps = CommonProp & {
 
 /** edit area ref数据 */
 export interface EditAreaState {
-  domRef: React.MutableRefObject<HTMLDivElement>;
+  domRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, ref) => {
@@ -38,7 +38,7 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
     scrollLeft,
     scrollTop,
     scale,
-    hideCursor,
+    hideCursor = false,
     cursorTime,
     onScroll,
     dragLine,
@@ -51,8 +51,8 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
     onActionResizing,
   } = props;
   const { dragLineData, initDragLine, updateDragLine, disposeDragLine, defaultGetAssistPosition, defaultGetMovePosition } = useDragLine();
-  const editAreaRef = useRef<HTMLDivElement>();
-  const gridRef = useRef<Grid>();
+  const editAreaRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<Grid>(null);
   const heightRef = useRef(-1);
 
   // ref 数据
@@ -149,7 +149,7 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
   }, [scrollTop, scrollLeft]);
 
   useEffect(() => {
-    gridRef.current.recomputeGridSize();
+    gridRef.current?.recomputeGridSize();
   }, [editorData]);
 
   return (

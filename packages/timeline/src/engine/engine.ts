@@ -46,7 +46,7 @@ export class TimelineEngine extends Emitter<EventTypes> implements ITimelineEngi
   }
 
   /** requestAnimationFrame timerId */
-  private _timerId: number;
+  private _timerId: number | undefined;
 
   /** 播放速率 */
   private _playRate = 1;
@@ -55,7 +55,7 @@ export class TimelineEngine extends Emitter<EventTypes> implements ITimelineEngi
   /** 播放状态 */
   private _playState: PlayState = 'paused';
   /** 时间帧pre数据 */
-  private _prev: number;
+  private _prev: number = 0;
 
   /** 动作效果map */
   private _effectMap: Record<string, TimelineEffect> = {};
@@ -95,7 +95,7 @@ export class TimelineEngine extends Emitter<EventTypes> implements ITimelineEngi
   setPlayRate(rate: number): boolean {
     if (rate <= 0) {
       console.error('Error: rate cannot be less than 0!');
-      return;
+      return false;
     }
     const result = this.trigger('beforeSetPlayRate', { rate, engine: this });
     if (!result) return false;
@@ -196,7 +196,7 @@ export class TimelineEngine extends Emitter<EventTypes> implements ITimelineEngi
 
       this.trigger('paused', { engine: this });
     }
-    cancelAnimationFrame(this._timerId);
+    this._timerId && cancelAnimationFrame(this._timerId);
   }
 
   /** 播放完成 */
@@ -272,7 +272,7 @@ export class TimelineEngine extends Emitter<EventTypes> implements ITimelineEngi
   private _dealClear() {
     while (this._activeActionIds.length) {
       const actionId = this._activeActionIds.shift();
-      const action = this._actionMap[actionId];
+      const action = this._actionMap[actionId as string];
 
       const effect = this._effectMap[action?.effectId];
       if (effect?.source?.leave) {

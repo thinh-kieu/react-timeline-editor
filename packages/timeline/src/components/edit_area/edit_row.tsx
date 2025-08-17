@@ -8,7 +8,7 @@ import { EditAction } from './edit_action';
 import './edit_row.less';
 
 export type EditRowProps = CommonProp & {
-  areaRef: React.MutableRefObject<HTMLDivElement>;
+  areaRef: React.RefObject<HTMLDivElement>;
   rowData?: TimelineRow;
   style?: React.CSSProperties;
   dragLineData: DragLineData;
@@ -20,24 +20,13 @@ export type EditRowProps = CommonProp & {
 };
 
 export const EditRow: FC<EditRowProps> = (props) => {
-  const {
-    rowData,
-    style = {},
-    onClickRow,
-    onDoubleClickRow,
-    onContextMenuRow,
-    areaRef,
-    scrollLeft,
-    startLeft,
-    scale,
-    scaleWidth,
-  } = props;
+  const { rowData, style = {}, onClickRow, onDoubleClickRow, onContextMenuRow, areaRef, scrollLeft, startLeft, scale, scaleWidth } = props;
 
   const classNames = ['edit-row'];
   if (rowData?.selected) classNames.push('edit-row-selected');
 
   const handleTime = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (!areaRef.current) return;
+    if (!areaRef.current) return 0;
     const rect = areaRef.current.getBoundingClientRect();
     const position = e.clientX - rect.x;
     const left = position + scrollLeft;
@@ -47,9 +36,7 @@ export const EditRow: FC<EditRowProps> = (props) => {
 
   return (
     <div
-      className={`${prefix(...classNames)} ${(rowData?.classNames || []).join(
-        ' ',
-      )}`}
+      className={`${prefix(...classNames)} ${(rowData?.classNames || []).join(' ')}`}
       style={style}
       onClick={(e) => {
         if (rowData && onClickRow) {
@@ -71,13 +58,7 @@ export const EditRow: FC<EditRowProps> = (props) => {
       }}
     >
       {(rowData?.actions || []).map((action) => (
-        <EditAction
-          key={action.id}
-          {...props}
-          handleTime={handleTime}
-          row={rowData}
-          action={action}
-        />
+        <EditAction key={action.id} {...props} handleTime={handleTime} row={rowData!} action={action} />
       ))}
     </div>
   );

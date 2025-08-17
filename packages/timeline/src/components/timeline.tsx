@@ -7,8 +7,8 @@ import { checkProps } from '../utils/check_props';
 import { getScaleCountByRows, parserPixelToTime, parserTimeToPixel } from '../utils/deal_data';
 import { Cursor } from './cursor/cursor';
 import { EditArea } from './edit_area/edit_area';
-import './timeline.less';
 import { TimeArea } from './time_area/time_area';
+import './timeline.less';
 
 export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, ref) => {
   const checkedProps = checkProps(props);
@@ -32,9 +32,10 @@ export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, 
   } = checkedProps;
 
   const engineRef = useRef<ITimelineEngine>(engine || new TimelineEngine());
-  const domRef = useRef<HTMLDivElement>();
-  const areaRef = useRef<HTMLDivElement>();
-  const scrollSync = useRef<ScrollSync>();
+  const domRef = useRef<HTMLDivElement>(null);
+  const areaRef = useRef<HTMLDivElement>(null);
+
+  const scrollSync = useRef<ScrollSync>(null);
 
   // 编辑器数据
   const [editorData, setEditorData] = useState(data);
@@ -78,7 +79,7 @@ export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, 
 
   /** 处理主动数据变化 */
   const handleEditorDataChange = (editorData: TimelineRow[]) => {
-    const result = onChange(editorData);
+    const result = onChange?.(editorData);
     if (result !== false) {
       engineRef.current.data = editorData;
       autoReRender && engineRef.current.reRender();
@@ -87,8 +88,8 @@ export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, 
 
   /** 处理光标 */
   const handleSetCursor = (param: { left?: number; time?: number; updateTime?: boolean }) => {
-    let { left, time, updateTime = true } = param;
-    if (typeof left === 'undefined' && typeof time === 'undefined') return;
+    let { left, time = 0, updateTime = true } = param;
+    if (typeof left === 'undefined' && typeof time === 'undefined') return false;
 
     if (typeof time === 'undefined') {
       if (typeof left === 'undefined') left = parserTimeToPixel(time, { startLeft, scale, scaleWidth });
@@ -107,14 +108,14 @@ export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, 
   /** 设置scrollLeft */
   const handleDeltaScrollLeft = (delta: number) => {
     // 当超过最大距离时，禁止自动滚动
-    const data = scrollSync.current.state.scrollLeft + delta;
+    const data = (scrollSync.current?.state?.scrollLeft ?? 0) + delta;
     if (data > scaleCount * (scaleWidth - 1) + startLeft - width) return;
     scrollSync.current && scrollSync.current.setState({ scrollLeft: Math.max(scrollSync.current.state.scrollLeft + delta, 0) });
   };
 
   // 处理运行器相关数据
   useEffect(() => {
-    const handleTime = ({ time }) => {
+    const handleTime = ({ time }: { time: number }) => {
       handleSetCursor({ time, updateTime: false });
     };
     const handlePlay = () => setIsPlaying(true);
@@ -196,7 +197,7 @@ export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, 
               scrollTop={scrollTop}
               scrollLeft={scrollLeft}
               setEditorData={handleEditorDataChange}
-              deltaScrollLeft={autoScroll && handleDeltaScrollLeft}
+              deltaScrollLeft={autoScroll ? handleDeltaScrollLeft : () => {}}
               onScroll={(params) => {
                 onScroll(params);
                 onScrollVertical && onScrollVertical(params);
@@ -215,7 +216,7 @@ export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, 
                 editorData={editorData}
                 areaRef={areaRef}
                 scrollSync={scrollSync}
-                deltaScrollLeft={autoScroll && handleDeltaScrollLeft}
+                deltaScrollLeft={autoScroll ? handleDeltaScrollLeft : undefined}
               />
             )}
           </>

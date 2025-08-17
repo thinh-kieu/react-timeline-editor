@@ -21,5 +21,9 @@
     "timeline": "yarn workspace @xzdarcy/react-timeline-editor run",
     "build:all": "yarn workspace @xzdarcy/react-timeline-editor build && yarn workspace @xzdarcy/docs build",
     "clean": "rm -rf packages/*/node_modules && rm -rf node_modules"
+  },
+  "resolutions": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0"
   }
 }

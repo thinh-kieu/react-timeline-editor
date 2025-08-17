@@ -20,6 +20,8 @@ export const DEFAULT_ROW_HEIGHT = 32;
 
 /** 最小scale数量 */
 export const MIN_SCALE_COUNT = 20;
+/** 最大scale数量 */
+export const MAX_SCALE_COUNT = Infinity;
 /** 每次新增scale个数 */
 export const ADD_SCALE_COUNT = 5;
 

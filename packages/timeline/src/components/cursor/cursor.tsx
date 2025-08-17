@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState } from 'react';
+import React, { FC, useEffect, useRef } from 'react';
 import { ScrollSync } from 'react-virtualized';
 import { CommonProp } from '../../interface/common_prop';
 import { prefix } from '../../utils/deal_class_prefix';
@@ -14,11 +14,11 @@ export type CursorProps = CommonProp & {
   /** 设置光标位置 */
   setCursor: (param: { left?: number; time?: number }) => boolean;
   /** 时间轴区域dom ref */
-  areaRef: React.MutableRefObject<HTMLDivElement>;
+  areaRef: React.RefObject<HTMLDivElement>;
   /** 设置scroll left */
-  deltaScrollLeft: (delta: number) => void;
+  deltaScrollLeft?: (delta: number) => void;
   /** 滚动同步ref（TODO: 该数据用于临时解决scrollLeft拖住时不同步问题） */
-  scrollSync: React.MutableRefObject<ScrollSync>;
+  scrollSync: React.RefObject<ScrollSync>;
 };
 
 export const Cursor: FC<CursorProps> = ({
@@ -38,13 +38,13 @@ export const Cursor: FC<CursorProps> = ({
   onCursorDrag,
   onCursorDragEnd,
 }) => {
-  const rowRnd = useRef<RowRndApi>();
+  const rowRnd = useRef<RowRndApi>(null);
   const draggingLeft = useRef<undefined | number>();
 
   useEffect(() => {
     if (typeof draggingLeft.current === 'undefined') {
       // 非dragging时，根据穿参更新cursor刻度
-      rowRnd.current.updateLeft(parserTimeToPixel(cursorTime, { startLeft, scaleWidth, scale }) - scrollLeft);
+      rowRnd.current?.updateLeft(parserTimeToPixel(cursorTime, { startLeft, scaleWidth, scale }) - scrollLeft);
     }
   }, [cursorTime, startLeft, scaleWidth, scale, scrollLeft]);
 
@@ -63,16 +63,16 @@ export const Cursor: FC<CursorProps> = ({
       onDragStart={() => {
         onCursorDragStart && onCursorDragStart(cursorTime);
         draggingLeft.current = parserTimeToPixel(cursorTime, { startLeft, scaleWidth, scale }) - scrollLeft;
-        rowRnd.current.updateLeft(draggingLeft.current);
+        rowRnd.current?.updateLeft(draggingLeft.current);
       }}
       onDragEnd={() => {
-        const time = parserPixelToTime(draggingLeft.current + scrollLeft, { startLeft, scale, scaleWidth });
+        const time = parserPixelToTime((draggingLeft.current || 0) + scrollLeft, { startLeft, scale, scaleWidth });
         setCursor({ time });
         onCursorDragEnd && onCursorDragEnd(time);
         draggingLeft.current = undefined;
       }}
       onDrag={({ left }, scroll = 0) => {
-        const scrollLeft = scrollSync.current.state.scrollLeft;
+        const scrollLeft = scrollSync.current?.state.scrollLeft || 0;
 
         if (!scroll || scrollLeft === 0) {
           // 拖拽时，如果当前left < left min，将数值设置为 left min
@@ -80,12 +80,12 @@ export const Cursor: FC<CursorProps> = ({
           else draggingLeft.current = left;
         } else {
           // 自动滚动时，如果当前left < left min，将数值设置为 left min
-          if (draggingLeft.current < startLeft - scrollLeft - scroll) {
+          if ((draggingLeft.current || 0) < startLeft - scrollLeft - scroll) {
             draggingLeft.current = startLeft - scrollLeft - scroll;
           }
         }
-        rowRnd.current.updateLeft(draggingLeft.current);
-        const time = parserPixelToTime(draggingLeft.current + scrollLeft, { startLeft, scale, scaleWidth });
+        rowRnd.current?.updateLeft(draggingLeft.current || 0);
+        const time = parserPixelToTime((draggingLeft.current || 0) + scrollLeft, { startLeft, scale, scaleWidth });
         setCursor({ time });
         onCursorDrag && onCursorDrag(time);
         return false;
