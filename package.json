@@ -19,6 +19,7 @@
   "scripts": {
     "docs": "yarn workspace @xzdarcy/docs run",
     "timeline": "yarn workspace @xzdarcy/react-timeline-editor run",
+    "engine": "yarn workspace @xzdarcy/timeline-engine run",
     "build:all": "yarn workspace @xzdarcy/react-timeline-editor build && yarn workspace @xzdarcy/docs build",
     "clean": "rm -rf packages/*/node_modules && rm -rf node_modules"
   },

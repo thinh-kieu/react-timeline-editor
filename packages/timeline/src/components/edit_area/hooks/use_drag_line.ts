@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TimelineAction, TimelineRow } from "../../../interface/action";
+import { TimelineAction, TimelineRow } from "@xzdarcy/timeline-engine/src/interface/action";
 import { parserActionsToPositions, parserTimeToTransform } from "../../../utils/deal_data";
 import { DragLineData } from "../drag_lines";
 

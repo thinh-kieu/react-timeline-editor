@@ -1,5 +1,5 @@
 import React, { FC, useLayoutEffect, useRef, useState } from 'react';
-import { TimelineAction, TimelineRow } from '../../interface/action';
+import { TimelineAction, TimelineRow } from '@xzdarcy/timeline-engine/src/interface/action';
 import { CommonProp } from '../../interface/common_prop';
 import { DEFAULT_ADSORPTION_DISTANCE, DEFAULT_MOVE_GRID } from '../../interface/const';
 import { prefix } from '../../utils/deal_class_prefix';

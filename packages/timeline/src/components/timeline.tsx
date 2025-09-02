@@ -1,8 +1,8 @@
+import { ITimelineEngine, TimelineEngine, TimelineRow } from '@xzdarcy/timeline-engine';
 import React, { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollSync } from 'react-virtualized';
-import { ITimelineEngine, TimelineEngine } from '../engine/engine';
 import { MIN_SCALE_COUNT, PREFIX, START_CURSOR_TIME } from '../interface/const';
-import { TimelineEditor, TimelineRow, TimelineState } from '../interface/timeline';
+import { TimelineEditor, TimelineState } from '../interface/timeline';
 import { checkProps } from '../utils/check_props';
 import { getScaleCountByRows, parserPixelToTime, parserTimeToPixel } from '../utils/deal_data';
 import { Cursor } from './cursor/cursor';

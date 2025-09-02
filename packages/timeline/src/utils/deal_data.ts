@@ -1,4 +1,4 @@
-import { TimelineAction, TimelineRow } from "../interface/action";
+import { TimelineAction, TimelineRow } from "@xzdarcy/timeline-engine/src/interface/action";
 import { ADD_SCALE_COUNT } from "../interface/const";
 
 /** 时间转像素 */

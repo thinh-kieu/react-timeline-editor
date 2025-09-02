@@ -1,11 +1,11 @@
-import { TimelineEngine } from "../engine/engine";
-import { TimelineAction } from "./action";
+import type { TimelineEngine } from "../core/engine";
+import type { TimelineAction } from "./action";
 
 export interface TimelineEffect {
   /** 效果id */
-  id: string, 
+  id: string,
   /** 效果名称 */
-  name?: string, 
+  name?: string,
   /** 效果运行代码 */
   source?: TimeLineEffectSource,
 }

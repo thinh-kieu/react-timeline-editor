@@ -1,6 +1,6 @@
 import React, { useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { AutoSizer, Grid, GridCellRenderer, OnScrollParams } from 'react-virtualized';
-import { TimelineRow } from '../../interface/action';
+import { TimelineRow } from '@xzdarcy/timeline-engine/src/interface/action';
 import { CommonProp } from '../../interface/common_prop';
 import { EditData } from '../../interface/timeline';
 import { prefix } from '../../utils/deal_class_prefix';

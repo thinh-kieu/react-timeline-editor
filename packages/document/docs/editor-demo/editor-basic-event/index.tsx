@@ -1,8 +1,9 @@
-import { Timeline, TimelineAction } from '@xzdarcy/react-timeline-editor';
+import { Timeline } from '@xzdarcy/react-timeline-editor';
 import { cloneDeep } from 'lodash';
 import React, { useRef, useState } from 'react';
 import './index.less';
 import { mockData, mockEffect } from './mock';
+import { TimelineAction } from '@xzdarcy/timeline-engine';
 
 const defaultEditorData = cloneDeep(mockData);
 

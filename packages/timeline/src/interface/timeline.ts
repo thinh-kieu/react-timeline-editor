@@ -1,12 +1,8 @@
+import { Emitter, EventTypes, ITimelineEngine } from '@xzdarcy/timeline-engine';
 import React, { ReactNode } from 'react';
 import { OnScrollParams } from 'react-virtualized';
-import { ITimelineEngine } from '..';
-import { Emitter } from '../engine/emitter';
-import { EventTypes } from '../engine/events';
-import { TimelineAction, TimelineRow } from './action';
-import { TimelineEffect } from './effect';
-export * from './action';
-export * from './effect';
+import { TimelineAction, TimelineRow } from '@xzdarcy/timeline-engine';
+import { TimelineEffect } from '@xzdarcy/timeline-engine';
 
 export interface EditData {
   /**

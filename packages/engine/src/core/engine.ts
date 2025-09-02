@@ -1,7 +1,7 @@
-import { TimelineAction, TimelineRow } from '../interface/action';
-import { TimelineEffect } from '../interface/effect';
 import { Emitter } from './emitter';
 import { Events, EventTypes } from './events';
+import { TimelineAction, TimelineRow } from '../interface/action';
+import { TimelineEffect } from '../interface/effect';
 
 const PLAYING = 'playing';
 const PAUSED = 'paused';
