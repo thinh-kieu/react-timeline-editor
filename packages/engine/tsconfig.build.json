@@ -4,7 +4,7 @@
     "moduleResolution": "bundler",
     "module": "esnext",
     "declaration": true,
-    "declarationMap": true,
+    "declarationMap": false,
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",

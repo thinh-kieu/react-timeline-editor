@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { TimelineRow } from '@xzdarcy/timeline-engine/src/interface/action';
+import { TimelineAction, TimelineRow } from '@xzdarcy/timeline-engine';
 import { CommonProp } from '../../interface/common_prop';
 import { prefix } from '../../utils/deal_class_prefix';
 import { parserPixelToTime } from '../../utils/deal_data';
@@ -57,7 +57,7 @@ export const EditRow: FC<EditRowProps> = (props) => {
         }
       }}
     >
-      {(rowData?.actions || []).map((action) => (
+      {(rowData?.actions || []).map((action: TimelineAction) => (
         <EditAction key={action.id} {...props} handleTime={handleTime} row={rowData!} action={action} />
       ))}
     </div>

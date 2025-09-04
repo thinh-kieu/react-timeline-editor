@@ -1,5 +1,5 @@
 import React, { FC, useLayoutEffect, useRef, useState } from 'react';
-import { TimelineAction, TimelineRow } from '@xzdarcy/timeline-engine/src/interface/action';
+import { TimelineAction, TimelineRow } from '@xzdarcy/timeline-engine';
 import { CommonProp } from '../../interface/common_prop';
 import { DEFAULT_ADSORPTION_DISTANCE, DEFAULT_MOVE_GRID } from '../../interface/const';
 import { prefix } from '../../utils/deal_class_prefix';
@@ -123,9 +123,9 @@ export const EditAction: FC<EditActionProps> = ({
     const { start, end } = parserTransformToTime({ left, width }, { scaleWidth, scale, startLeft });
 
     // 设置数据
-    const rowItem = editorData.find((item) => item.id === row.id);
+    const rowItem = editorData.find((item: TimelineRow) => item.id === row.id);
     if (!rowItem) return;
-    const action = rowItem.actions.find((item) => item.id === id);
+    const action = rowItem.actions.find((item: TimelineAction) => item.id === id);
     if (!action) return;
     action.start = start;
     action.end = end;
@@ -155,9 +155,9 @@ export const EditAction: FC<EditActionProps> = ({
     const { start, end } = parserTransformToTime({ left, width }, { scaleWidth, scale, startLeft });
 
     // 设置数据
-    const rowItem = editorData.find((item) => item.id === row.id);
+    const rowItem = editorData.find((item: TimelineRow) => item.id === row.id);
     if (!rowItem) return;
-    const action = rowItem.actions.find((item) => item.id === id);
+    const action = rowItem.actions.find((item: TimelineAction) => item.id === id);
     if (!action) return;
     action.start = start;
     action.end = end;

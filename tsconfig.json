@@ -1,28 +1,5 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "importHelpers": true,
-    "jsx": "react",
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "baseUrl": "./",
-    "strict": false,
-    "paths": {
-      "react": [ "./node_modules/@types/react"]
-    },
-    "allowSyntheticDefaultImports": true
-  },
-  "exclude": [
-    "node_modules",
-    "lib",
-    "es",
-    "dist",
-    "packages/documents",
-    "typings",
-    "**/__test__",
-    "test",
-    "tests"
-  ]
+    "target": "esnext"
+  }
 }

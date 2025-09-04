@@ -1,4 +1,4 @@
-import { TimelineAction, TimelineRow } from "@xzdarcy/timeline-engine/src/interface/action";
+import { TimelineAction, TimelineRow } from "@xzdarcy/timeline-engine";
 import { ADD_SCALE_COUNT } from "../interface/const";
 
 /** 时间转像素 */
@@ -73,7 +73,7 @@ export function parserTimeToTransform(
 export function getScaleCountByRows(data: TimelineRow[], param: { scale: number }) {
   let max = 0;
   data.forEach((row) => {
-    row.actions.forEach((action) => {
+    row.actions.forEach((action: TimelineAction) => {
       max = Math.max(max, action.end);
     });
   });
