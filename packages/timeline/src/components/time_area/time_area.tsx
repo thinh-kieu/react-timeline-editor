@@ -1,8 +1,8 @@
-import { parserPixelToTime } from '@/utils/deal_data';
-import React, { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useRef } from 'react';
 import { AutoSizer, Grid, GridCellRenderer, OnScrollParams } from 'react-virtualized';
 import { CommonProp } from '../../interface/common_prop';
 import { prefix } from '../../utils/deal_class_prefix';
+import { parserPixelToTime } from '../../utils/deal_data';
 import './time_area.less';
 
 /** 动画时间轴组件参数 */

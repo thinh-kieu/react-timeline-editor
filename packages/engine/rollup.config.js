@@ -8,7 +8,6 @@ const isDev = process.env.NODE_ENV === 'development';
 // 共享配置
 const sharedConfig = {
   input: 'src/index.ts',
-  external: ['react'],
   plugins: [
     nodeResolve(),
     commonjs(),
@@ -105,9 +104,6 @@ const prodConfig = [
       file: 'dist/index.umd.js',
       format: 'umd',
       name: 'TimelineEngine',
-      globals: {
-        react: 'React',
-      },
       sourcemap: true,
     },
     plugins: [
@@ -126,9 +122,6 @@ const prodConfig = [
       file: 'dist/index.umd.min.js',
       format: 'umd',
       name: 'TimelineEngine',
-      globals: {
-        react: 'React',
-      },
       sourcemap: true,
     },
     plugins: [
