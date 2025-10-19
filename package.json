@@ -17,6 +17,7 @@
   "packageManager": "yarn@4.9.2",
   "scripts": {
     "docs": "yarn workspace docs run",
+    "example": "yarn workspace example run",
     "build": "yarn workspaces foreach -ptvA --no-private --include='packages/**' run build || exit 1",
     "publish:alpha": "bash scripts/publish-alpha.sh",
     "publish:release": "bash scripts/publish-release.sh"
