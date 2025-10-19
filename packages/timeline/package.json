@@ -26,9 +26,9 @@
     "src",
     "dist"
   ],
-  "main": "src/index.ts",
-  "module": "src/index.ts",
-  "typings": "src/index.ts",
+  "main": "src/index.tsx",
+  "module": "src/index.tsx",
+  "typings": "src/index.tsx",
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
