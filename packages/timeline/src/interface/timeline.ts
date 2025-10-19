@@ -69,6 +69,11 @@ export interface EditData {
    */
   disableDrag?: boolean;
   /**
+   * @description 禁止全部Row的拖动
+   * @default false
+   */
+  disableRowDrag?: boolean;
+  /**
    * @description timeline运行器，不传则使用内置运行器
    */
   engine?: ITimelineEngine;
@@ -198,6 +203,17 @@ export interface EditData {
    * @description 点击时间区域事件, 返回false时阻止设置时间
    */
   onClickTimeArea?: (time: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => boolean | undefined;
+  /**
+   * @description 行拖拽回调开始
+   * @param params row为被拖拽的行数据
+   */
+  onRowDragStart?: (params: { row: TimelineRow }) => void;
+  /**
+   * @description 行拖拽回调结束
+   * @param params row为被拖拽的行数据；editorData为row被拖拽后，新的数据排列
+   * @returns
+   */
+  onRowDragEnd?: (params: { row: TimelineRow; editorData: TimelineRow[] }) => void;
 }
 
 export interface TimelineState {

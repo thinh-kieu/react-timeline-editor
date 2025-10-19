@@ -22,6 +22,7 @@ const RowDrag: React.FC<RowDragProps> = () => {
       <div className="row-drag-content">
         <Timeline
           onChange={setData}
+          disableRowDrag={false}
           editorData={data}
           effects={mockEffect}
           hideCursor={false}
@@ -37,6 +38,12 @@ const RowDrag: React.FC<RowDragProps> = () => {
           }}
           onClickRow={(row) => {
             console.log('click row', row);
+          }}
+          onRowDragStart={(params) => {
+            console.log('row drag start', params.row);
+          }}
+          onRowDragEnd={(params) => {
+            console.log('row drag end', params.row, params.editorData);
           }}
         />
       </div>
