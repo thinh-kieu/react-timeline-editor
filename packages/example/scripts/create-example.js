@@ -175,7 +175,7 @@ function updateConfigFile(exampleName) {
   }
 
   // 在数组结束前插入新配置
-  const newConfig = `,
+  const newConfig = `
   {
     id: '${exampleName}',
     path: '/${exampleName}',
@@ -186,7 +186,7 @@ function updateConfigFile(exampleName) {
     icon: '⭐',
     color: '#${Math.floor(Math.random()*16777215).toString(16)}',
     status: 'development'
-  }`;
+  },`;
 
   const updatedContent = configContent.slice(0, configsEndIndex) + newConfig + configContent.slice(configsEndIndex);
 
@@ -202,23 +202,23 @@ function updateMainEntry(exampleName) {
 
   // 在组件导入部分添加新组件的导入语句
   const importStatement = `import ${capitalizeFirst(exampleName)} from '../components/${exampleName}';`;
-  
+
   // 找到最后一个import语句的位置
   const lastImportIndex = mainEntryContent.lastIndexOf('import');
   const nextLineAfterLastImport = mainEntryContent.indexOf('\n', lastImportIndex) + 1;
-  
+
   // 在最后一个import语句后插入新import
   mainEntryContent = mainEntryContent.slice(0, nextLineAfterLastImport) + '\n' + importStatement + mainEntryContent.slice(nextLineAfterLastImport);
 
   // 在组件映射表中添加新组件
   const componentMapStart = mainEntryContent.indexOf('const componentMap: Record<string, React.FC> = {');
   const componentMapEnd = mainEntryContent.indexOf('};', componentMapStart) + 2;
-  
+
   // 在组件映射表结束前插入新组件
   const componentMapContent = mainEntryContent.slice(componentMapStart, componentMapEnd);
   const lastComponentIndex = componentMapContent.lastIndexOf(',');
   const newComponentMapContent = componentMapContent.slice(0, lastComponentIndex + 1) + `\n  ${capitalizeFirst(exampleName)},` + componentMapContent.slice(lastComponentIndex + 1);
-  
+
   mainEntryContent = mainEntryContent.slice(0, componentMapStart) + newComponentMapContent + mainEntryContent.slice(componentMapEnd);
 
   fs.writeFileSync(mainEntryFile, mainEntryContent);

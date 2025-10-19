@@ -91,6 +91,17 @@ export const appConfigs: AppConfig[] = [
     color: '#20c997',
     status: 'development',
   },
+  {
+    id: 'row-drag',
+    path: '/row-drag',
+    componentName: 'RowDrag',
+    title: 'RowDrag',
+    description: 'RowDrag 示例描述',
+    route: '/row-drag',
+    icon: '⭐',
+    color: '#b15a40',
+    status: 'ready',
+  },
 ];
 
 // 获取可用的路由配置（状态为ready）
