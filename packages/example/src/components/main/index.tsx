@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ExampleItem, examples } from '../../config/examples';
+import { examples } from '../../config/app-config';
 import './index.less';
 
 const MainPage: React.FC = () => {
-  const getStatusBadge = (status: ExampleItem['status']) => {
+  const getStatusBadge = (status: 'ready' | 'planned' | 'development') => {
     const statusConfig = {
       ready: { text: '可用', color: '#28a745', bgColor: '#d4edda' },
       development: { text: '开发中', color: '#ffc107', bgColor: '#fff3cd' },
@@ -30,7 +30,7 @@ const MainPage: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const handleExampleClick = (example: ExampleItem) => {
+  const handleExampleClick = (example: typeof examples[number]) => {
     if (example.status === 'ready') {
       // 使用React Router进行导航
       navigate(example.route);

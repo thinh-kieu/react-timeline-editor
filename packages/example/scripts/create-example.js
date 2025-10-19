@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 const componentsDir = path.join(projectRoot, 'src', 'components');
 const entriesDir = path.join(projectRoot, 'src', 'entries');
-const configFile = path.join(projectRoot, 'src', 'config', 'examples.ts');
+const configFile = path.join(projectRoot, 'src', 'config', 'app-config.ts');
 
 // 获取示例名称参数
 const exampleName = process.argv[2];
@@ -40,7 +40,7 @@ console.log(`✅ 创建示例文件夹: ${exampleName}`);
 // 创建组件文件
 const componentContent = `import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './${exampleName}.css';
+import './index.less';
 
 interface ${capitalizeFirst(exampleName)}Props {
   // 组件属性定义
@@ -129,7 +129,6 @@ console.log(`✅ 创建样式文件: ${exampleName}/index.less`);
 const entryContent = `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import ${capitalizeFirst(exampleName)} from '../components/${exampleName}';
-import './index.less';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -145,11 +144,8 @@ root.render(
 fs.writeFileSync(path.join(entriesDir, `${exampleName}.tsx`), entryContent);
 console.log(`✅ 创建入口文件: ${exampleName}.tsx`);
 
-// 更新配置文件
+// 更新统一配置文件
 updateConfigFile(exampleName);
-
-// 更新路由配置
-updateRouteConfig(exampleName);
 
 // 更新主入口文件
 updateMainEntry(exampleName);
@@ -157,28 +153,33 @@ updateMainEntry(exampleName);
 console.log(`\n🎉 示例 "${exampleName}" 创建成功！`);
 console.log(`📁 组件位置: src/components/${exampleName}/`);
 console.log(`📄 入口文件: src/entries/${exampleName}.tsx`);
-console.log(`🔧 配置已自动添加到 src/config/examples.ts`);
-console.log(`🛣️  路由配置已自动更新`);
+console.log(`🔧 配置已自动添加到 src/config/app-config.ts`);
 console.log(`🚀 主入口文件已自动更新`);
 
 function capitalizeFirst(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+  // 将连字符分隔的单词转换为驼峰命名法
+  return str
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
 }
 
 function updateConfigFile(exampleName) {
   const configContent = fs.readFileSync(configFile, 'utf8');
 
-  // 找到示例数组的结束位置
-  const examplesEndIndex = configContent.lastIndexOf('];');
-  if (examplesEndIndex === -1) {
-    console.error('❌ 无法找到配置文件中的示例数组');
+  // 找到应用配置数组的结束位置
+  const configsEndIndex = configContent.lastIndexOf('\n];');
+  if (configsEndIndex === -1) {
+    console.error('❌ 无法找到配置文件中的应用配置数组');
     return;
   }
 
-  // 在数组结束前插入新示例
-  const newExample = `,
+  // 在数组结束前插入新配置
+  const newConfig = `,
   {
     id: '${exampleName}',
+    path: '/${exampleName}',
+    componentName: '${capitalizeFirst(exampleName)}',
     title: '${capitalizeFirst(exampleName)}',
     description: '${capitalizeFirst(exampleName)} 示例描述',
     route: '/${exampleName}',
@@ -187,49 +188,39 @@ function updateConfigFile(exampleName) {
     status: 'development'
   }`;
 
-  const updatedContent = configContent.slice(0, examplesEndIndex) + newExample + configContent.slice(examplesEndIndex);
+  const updatedContent = configContent.slice(0, configsEndIndex) + newConfig + configContent.slice(configsEndIndex);
 
   fs.writeFileSync(configFile, updatedContent);
-  console.log(`✅ 更新配置文件: examples.ts`);
+  console.log(`✅ 更新配置文件: app-config.ts`);
 }
 
-function updateRouteConfig(exampleName) {
-  const routesFile = path.join(projectRoot, 'src', 'config', 'routes.ts');
-  let routesContent = fs.readFileSync(routesFile, 'utf8');
 
-  // 在routes数组末尾添加新路由
-  const routeToAdd = `,\n  {\n    id: '${exampleName}',\n    path: '/${exampleName}',\n    componentName: '${capitalizeFirst(exampleName)}',\n    title: '${capitalizeFirst(exampleName)}',\n    description: '${capitalizeFirst(exampleName)} 示例描述',\n    status: 'development'\n  }`;
-
-  // 找到routes数组的结束位置并插入新路由
-  const routesArrayEnd = routesContent.indexOf('];');
-  if (routesArrayEnd !== -1) {
-    routesContent = routesContent.slice(0, routesArrayEnd) + routeToAdd + routesContent.slice(routesArrayEnd);
-    fs.writeFileSync(routesFile, routesContent);
-    console.log(`✅ 更新路由配置: routes.ts`);
-  } else {
-    console.error('❌ 无法找到路由配置中的数组结束位置');
-  }
-}
 
 function updateMainEntry(exampleName) {
   const mainEntryFile = path.join(projectRoot, 'src', 'entries', 'main.tsx');
   let mainEntryContent = fs.readFileSync(mainEntryFile, 'utf8');
 
-  // 添加新组件的导入
-  const importToAdd = `\nimport ${capitalizeFirst(exampleName)} from '../components/${exampleName}';`;
-  const importSectionEnd = mainEntryContent.indexOf('// 组件映射表');
-  if (importSectionEnd !== -1) {
-    mainEntryContent = mainEntryContent.slice(0, importSectionEnd) + importToAdd + '\n' + mainEntryContent.slice(importSectionEnd);
-  }
+  // 在组件导入部分添加新组件的导入语句
+  const importStatement = `import ${capitalizeFirst(exampleName)} from '../components/${exampleName}';`;
+  
+  // 找到最后一个import语句的位置
+  const lastImportIndex = mainEntryContent.lastIndexOf('import');
+  const nextLineAfterLastImport = mainEntryContent.indexOf('\n', lastImportIndex) + 1;
+  
+  // 在最后一个import语句后插入新import
+  mainEntryContent = mainEntryContent.slice(0, nextLineAfterLastImport) + '\n' + importStatement + mainEntryContent.slice(nextLineAfterLastImport);
 
   // 在组件映射表中添加新组件
-  const componentMapEnd = mainEntryContent.indexOf('};');
-  if (componentMapEnd !== -1) {
-    const mapToAdd = `\n  ${capitalizeFirst(exampleName)},`;
-    mainEntryContent = mainEntryContent.slice(0, componentMapEnd) + mapToAdd + mainEntryContent.slice(componentMapEnd);
-  }
+  const componentMapStart = mainEntryContent.indexOf('const componentMap: Record<string, React.FC> = {');
+  const componentMapEnd = mainEntryContent.indexOf('};', componentMapStart) + 2;
+  
+  // 在组件映射表结束前插入新组件
+  const componentMapContent = mainEntryContent.slice(componentMapStart, componentMapEnd);
+  const lastComponentIndex = componentMapContent.lastIndexOf(',');
+  const newComponentMapContent = componentMapContent.slice(0, lastComponentIndex + 1) + `\n  ${capitalizeFirst(exampleName)},` + componentMapContent.slice(lastComponentIndex + 1);
+  
+  mainEntryContent = mainEntryContent.slice(0, componentMapStart) + newComponentMapContent + mainEntryContent.slice(componentMapEnd);
 
-  // 写入更新后的主入口文件
   fs.writeFileSync(mainEntryFile, mainEntryContent);
   console.log(`✅ 更新主入口文件: main.tsx`);
 }

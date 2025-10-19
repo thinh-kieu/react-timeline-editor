@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { routes } from '../config/routes';
+import { routes } from '../config/app-config';
 
 // 导入所有组件
 import MainPage from '../components/main';
@@ -9,7 +9,6 @@ import BasicExample from '../components/basic';
 import TimelineExample from '../components/timeline';
 import AnimationExample from '../components/animation';
 
-// 组件映射表
 const componentMap: Record<string, React.FC> = {
   MainPage,
   BasicExample,
