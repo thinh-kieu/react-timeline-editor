@@ -9,6 +9,9 @@ import { DragLines } from './drag_lines';
 import './edit_area.less';
 import { EditRow } from './edit_row';
 import { useDragLine } from './hooks/use_drag_line';
+import { calculateRowAccumulatedHeight, calculateTotalHeight, getRowHeights, calculateInsertionLineTop, isValidDragTarget } from './drag_utils';
+import { InsertionLine } from './insertion_line';
+import { DragPreview } from './drag_preview';
 
 export type EditAreaProps = CommonProp & {
   /** 距离左侧滚动距离 */
@@ -115,14 +118,13 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
   // 行重新排序算法
   const reorderRows = useCallback((data: TimelineRow[], fromIndex: number, toIndex: number): TimelineRow[] => {
     const result = [...data];
-    
+
     // 修正拖拽排序逻辑：考虑目标位置在源位置之后的情况
-    if (toIndex > fromIndex) {
-      // 如果目标位置在源位置之后，需要将目标位置减1
-      // 因为移除源元素后，后续元素的索引会前移
+    // 注意：当拖拽到最后一行时（toIndex = data.length），不需要修正
+    if (toIndex > fromIndex && toIndex < data.length) {
       toIndex = toIndex - 1;
     }
-    
+
     const [removed] = result.splice(fromIndex, 1);
     result.splice(toIndex, 0, removed);
     return result;
@@ -136,7 +138,6 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
       const rect = editAreaRef.current.getBoundingClientRect();
       const viewportTop = clientY - rect.top + scrollTop;
 
-      // 获取可见行信息
       const rowCount = editorData.length;
       let currentTop = 0;
 
@@ -149,20 +150,13 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
         const rowHeight = editorData[i]?.rowHeight || props.rowHeight;
         const rowBottom = currentTop + rowHeight;
 
-        // 检查鼠标是否在当前行范围内
         if (viewportTop >= currentTop && viewportTop <= rowBottom) {
-          // 计算鼠标到当前行顶部和底部的距离
           const distanceToTop = Math.abs(viewportTop - currentTop);
           const distanceToBottom = Math.abs(viewportTop - rowBottom);
 
-          // 如果鼠标更接近当前行顶部，插入到当前行上方
           if (distanceToTop < distanceToBottom) {
             return { index: i, position: 'top' };
-          }
-          // 如果鼠标更接近当前行底部，插入到当前行下方
-          else {
-            // 避免位置i的bottom与位置i+1的top指向同一物理位置
-            // 如果插入到当前行下方，实际应该插入到下一行位置
+          } else {
             return { index: i + 1, position: 'top' };
           }
         }
@@ -170,30 +164,36 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
         currentTop = rowBottom;
       }
 
-      // 如果鼠标在所有行之后，插入到最后一行下方
       return { index: rowCount, position: 'top' };
     },
     [editorData, props.rowHeight, scrollTop],
   );
 
-  // 处理行拖拽开始
-  const handleRowDragStart = useCallback(
+  // 计算拖拽预览位置
+  const calculateDragPreviewPosition = useCallback(
+    (clientY: number, dragPreviewHeight: number) => {
+      if (!editAreaRef.current) return 0;
+
+      const rect = editAreaRef.current.getBoundingClientRect();
+      let previewTop = clientY - rect.top - dragPreviewHeight / 2 + scrollTop;
+
+      // 限制预览元素在编辑区域内
+      previewTop = Math.max(0, Math.min(previewTop, rect.height - dragPreviewHeight));
+      return previewTop;
+    },
+    [scrollTop],
+  );
+
+  // 初始化拖拽状态
+  const initializeDragState = useCallback(
     (row: TimelineRow, rowIndex: number) => {
-      if (disableRowDrag) return;
-
       const originalData = [...editorData];
+      const dragPreviewHeight = row.rowHeight || props.rowHeight;
 
-      // 计算被拖拽行的位置和尺寸 - 优化：缓存行高计算
-      let dragPreviewTop = 0;
-      let dragPreviewHeight = row.rowHeight || props.rowHeight;
+      // 使用工具函数计算拖拽预览位置
+      const dragPreviewTop = calculateRowAccumulatedHeight(editorData, rowIndex, props.rowHeight);
 
-      // 缓存行高计算，避免重复计算
-      const rowHeights = editorData.map((r, i) => r?.rowHeight || props.rowHeight);
-      for (let i = 0; i < rowIndex; i++) {
-        dragPreviewTop += rowHeights[i];
-      }
-
-      setDragState({
+      return {
         isDragging: true,
         draggedRow: row,
         draggedIndex: rowIndex,
@@ -202,7 +202,7 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
         originalData,
         insertionLine: {
           visible: false,
-          position: 'top',
+          position: 'top' as const,
           index: -1,
         },
         dragPreview: {
@@ -212,20 +212,69 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
           width: 0,
           height: dragPreviewHeight,
         },
-      });
+      };
+    },
+    [editorData, props.rowHeight, calculateRowAccumulatedHeight],
+  );
+
+  // 更新拖拽状态
+  const updateDragState = useCallback((currentState: DragState, targetIndex: number, previewTop: number, rowIndex: number) => {
+    if (currentState.targetIndex === targetIndex && currentState.dragPreview.top === previewTop) {
+      return currentState; // 状态未变化，避免不必要的重渲染
+    }
+
+    return {
+      ...currentState,
+      targetIndex,
+      placeholderIndex: targetIndex > rowIndex ? targetIndex - 1 : targetIndex,
+      insertionLine: {
+        visible: targetIndex !== -1 && targetIndex !== rowIndex,
+        position: 'top' as const,
+        index: targetIndex,
+      },
+      dragPreview: {
+        ...currentState.dragPreview,
+        top: previewTop,
+      },
+    };
+  }, []);
+
+  // 处理拖拽结束
+  const handleDragEnd = useCallback(
+    (draggedIndex: number, targetIndex: number, draggedRow: TimelineRow | null, originalData: TimelineRow[]) => {
+      if (isValidDragTarget(targetIndex, draggedIndex, editorData.length)) {
+        const newData = reorderRows(editorData, draggedIndex, targetIndex);
+        setEditorData(newData);
+        onRowDragEnd?.({ row: draggedRow!, editorData: newData });
+      } else {
+        setEditorData(originalData);
+      }
+    },
+    [editorData, reorderRows, setEditorData, onRowDragEnd, isValidDragTarget],
+  );
+
+  // 处理行拖拽开始
+  const handleRowDragStart = useCallback(
+    (row: TimelineRow, rowIndex: number) => {
+      if (disableRowDrag) return;
+
+      // 初始化拖拽状态
+      const initialDragState = initializeDragState(row, rowIndex);
+      setDragState(initialDragState);
 
       // 触发回调
       onRowDragStart?.({ row });
 
-      // 优化防抖机制：使用requestAnimationFrame + 时间间隔控制
+      // 防抖机制控制变量
       let animationFrameId: number | null = null;
       let lastUpdateTime = 0;
       const UPDATE_INTERVAL = 16; // 约60fps，与浏览器刷新率匹配
 
+      // 鼠标移动处理函数
       const handleMouseMove = (moveEvent: MouseEvent) => {
         const currentTime = Date.now();
-        
-        // 取消之前的动画帧，确保只执行最新的更新
+
+        // 取消之前的动画帧
         if (animationFrameId) {
           cancelAnimationFrame(animationFrameId);
         }
@@ -236,38 +285,11 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
           if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
             const targetInfo = calculateTargetIndex(moveEvent.clientY);
             const targetIndex = targetInfo.index;
-
-            // 正确计算拖拽预览位置（相对于编辑区域容器）
-            let previewTop = 0;
-            if (editAreaRef.current) {
-              const rect = editAreaRef.current.getBoundingClientRect();
-              previewTop = moveEvent.clientY - rect.top - dragPreviewHeight / 2 + scrollTop;
-              // 限制预览元素在编辑区域内
-              previewTop = Math.max(0, Math.min(previewTop, rect.height - dragPreviewHeight));
-            }
+            const previewTop = calculateDragPreviewPosition(moveEvent.clientY, initialDragState.dragPreview.height);
 
             // 使用setTimeout延迟状态更新，避免在渲染过程中更新状态
             setTimeout(() => {
-              setDragState((prev) => {
-                if (prev.targetIndex === targetIndex && prev.dragPreview.top === previewTop) {
-                  return prev; // 状态未变化，避免不必要的重渲染
-                }
-
-                return {
-                  ...prev,
-                  targetIndex,
-                  placeholderIndex: targetIndex > rowIndex ? targetIndex - 1 : targetIndex,
-                  insertionLine: {
-                    visible: targetIndex !== -1 && targetIndex !== rowIndex,
-                    position: 'top',
-                    index: targetIndex,
-                  },
-                  dragPreview: {
-                    ...prev.dragPreview,
-                    top: previewTop,
-                  },
-                };
-              });
+              setDragState((prev) => updateDragState(prev, targetIndex, previewTop, rowIndex));
             }, 0);
 
             lastUpdateTime = currentTime;
@@ -276,6 +298,7 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
         });
       };
 
+      // 鼠标抬起处理函数
       const handleMouseUp = () => {
         // 清理动画帧
         if (animationFrameId) {
@@ -283,26 +306,30 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
           animationFrameId = null;
         }
 
-        // 使用函数式更新获取最新状态
+        // 使用函数式更新确保获取最新状态
         setDragState((prevState) => {
-          const { draggedIndex, targetIndex, insertionLine, originalData, draggedRow } = prevState;
+          const { draggedIndex, targetIndex, originalData, draggedRow } = prevState;
 
-          // 只有当目标位置有效且与当前节点不同时才进行插入操作
-          if (targetIndex !== -1 && targetIndex !== draggedIndex) {
-            // 由于现在统一使用top位置，目标索引就是实际要插入的位置
-            // 不需要再根据position调整索引
-            const adjustedTargetIndex = targetIndex;
+          // 立即重置拖拽状态，确保视觉反馈立即消失
+          const resetState = {
+            ...initialDragState,
+            draggedIndex: -1,
+            dragPreview: {
+              ...initialDragState.dragPreview,
+              visible: false,
+            },
+            insertionLine: {
+              ...initialDragState.insertionLine,
+              visible: false,
+            },
+          };
 
-            // 成功插入：重新排序数据
-            const newData = reorderRows(editorData, draggedIndex, adjustedTargetIndex);
-            setEditorData(newData);
-            onRowDragEnd?.({ row: draggedRow!, editorData: newData });
-          } else {
-            // 未成功插入或插入位置与当前节点相同：恢复到原始位置
-            setEditorData(originalData);
-          }
+          // 然后处理拖拽结束逻辑
+          setTimeout(() => {
+            handleDragEnd(draggedIndex, targetIndex, draggedRow, originalData);
+          }, 0);
 
-          return initialDragState;
+          return resetState;
         });
 
         document.removeEventListener('mousemove', handleMouseMove);
@@ -312,7 +339,7 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     },
-    [disableRowDrag, editorData, onRowDragStart, onRowDragEnd, setEditorData, reorderRows, calculateTargetIndex],
+    [disableRowDrag, onRowDragStart, initializeDragState, calculateTargetIndex, calculateDragPreviewPosition, updateDragState, handleDragEnd],
   );
 
   const handleInitDragLine: EditData['onActionMoveStart'] = (data) => {
@@ -354,11 +381,7 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
 
   /** 获取每个cell渲染内容 */
   const cellRenderer: GridCellRenderer = ({ rowIndex, key, style }) => {
-    const row = editorData[rowIndex]; // 行数据
-
-    // 判断当前行是否为占位符
-    const isPlaceholder = dragState.isDragging && rowIndex === dragState.placeholderIndex;
-    const isDragged = dragState.isDragging && rowIndex === dragState.draggedIndex;
+    const row = editorData[rowIndex];
 
     return (
       <EditRow
@@ -373,12 +396,11 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
         rowHeight={row?.rowHeight || rowHeight}
         rowData={row}
         dragLineData={dragLineData}
-        // 拖拽相关属性
         rowIndex={rowIndex}
-        isDragging={dragState.isDragging}
-        isDragged={isDragged}
-        isPlaceholder={isPlaceholder}
-        // 移除insertPosition属性，避免行级别插入线渲染
+        dragState={{
+          isDragging: dragState.draggedIndex !== -1,
+          draggedIndex: dragState.draggedIndex,
+        }}
         onRowDragStart={(params) => {
           handleRowDragStart(params.row, rowIndex);
         }}
@@ -388,7 +410,6 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
         }}
         onActionResizeStart={(data) => {
           handleInitDragLine(data);
-
           return onActionResizeStart && onActionResizeStart(data);
         }}
         onActionMoving={(data) => {
@@ -424,13 +445,9 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
       <AutoSizer>
         {({ width, height }) => {
           // 获取全部高度
-          let totalHeight = 0;
+          const totalHeight = calculateTotalHeight(editorData, rowHeight);
           // 高度列表
-          const heights = editorData.map((row) => {
-            const itemHeight = row.rowHeight || rowHeight;
-            totalHeight += itemHeight;
-            return itemHeight;
-          });
+          const heights = getRowHeights(editorData, rowHeight);
           if (totalHeight < height) {
             heights.push(height - totalHeight);
             if (heightRef.current !== height && heightRef.current >= 0) {
@@ -461,58 +478,9 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
                 }}
               />
               {/* 插入线指示器 */}
-              {dragState.insertionLine.visible && (
-                <div
-                  className={prefix('edit-area-insertion-line')}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    height: '2px',
-                    background: '#4a90e2',
-                    zIndex: 1000,
-                    pointerEvents: 'none',
-                    top: (() => {
-                      let top = 0;
-                      for (let i = 0; i < dragState.insertionLine.index; i++) {
-                        top += editorData[i]?.rowHeight || rowHeight;
-                      }
-                      return top;
-                    })(),
-                  }}
-                />
-              )}
+              <InsertionLine editorData={editorData} rowHeight={rowHeight} insertionLineIndex={dragState.insertionLine.index} visible={dragState.insertionLine.visible} />
               {/* 拖拽预览元素 */}
-              {dragState.dragPreview.visible && (
-                <div
-                  className={prefix('edit-area-drag-preview')}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    top: dragState.dragPreview.top,
-                    height: dragState.dragPreview.height,
-                    background: 'rgba(74, 144, 226, 0.3)',
-                    border: '2px dashed #4a90e2',
-                    borderRadius: '4px',
-                    zIndex: 1001,
-                    pointerEvents: 'none',
-                    opacity: 0.8,
-                    transition: 'top 0.1s ease',
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: '8px 16px',
-                      color: '#4a90e2',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    拖拽中...
-                  </div>
-                </div>
-              )}
+              <DragPreview top={dragState.dragPreview.top} height={dragState.dragPreview.height} visible={dragState.dragPreview.visible} />
             </>
           );
         }}
