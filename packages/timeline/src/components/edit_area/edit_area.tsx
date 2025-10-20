@@ -115,6 +115,14 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
   // 行重新排序算法
   const reorderRows = useCallback((data: TimelineRow[], fromIndex: number, toIndex: number): TimelineRow[] => {
     const result = [...data];
+    
+    // 修正拖拽排序逻辑：考虑目标位置在源位置之后的情况
+    if (toIndex > fromIndex) {
+      // 如果目标位置在源位置之后，需要将目标位置减1
+      // 因为移除源元素后，后续元素的索引会前移
+      toIndex = toIndex - 1;
+    }
+    
     const [removed] = result.splice(fromIndex, 1);
     result.splice(toIndex, 0, removed);
     return result;
@@ -153,7 +161,9 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
           }
           // 如果鼠标更接近当前行底部，插入到当前行下方
           else {
-            return { index: i, position: 'bottom' };
+            // 避免位置i的bottom与位置i+1的top指向同一物理位置
+            // 如果插入到当前行下方，实际应该插入到下一行位置
+            return { index: i + 1, position: 'top' };
           }
         }
 
@@ -161,7 +171,7 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
       }
 
       // 如果鼠标在所有行之后，插入到最后一行下方
-      return { index: rowCount, position: 'bottom' };
+      return { index: rowCount, position: 'top' };
     },
     [editorData, props.rowHeight, scrollTop],
   );
@@ -173,12 +183,14 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
 
       const originalData = [...editorData];
 
-      // 计算被拖拽行的位置和尺寸
+      // 计算被拖拽行的位置和尺寸 - 优化：缓存行高计算
       let dragPreviewTop = 0;
       let dragPreviewHeight = row.rowHeight || props.rowHeight;
 
+      // 缓存行高计算，避免重复计算
+      const rowHeights = editorData.map((r, i) => r?.rowHeight || props.rowHeight);
       for (let i = 0; i < rowIndex; i++) {
-        dragPreviewTop += editorData[i]?.rowHeight || props.rowHeight;
+        dragPreviewTop += rowHeights[i];
       }
 
       setDragState({
@@ -205,60 +217,88 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
       // 触发回调
       onRowDragStart?.({ row });
 
-      // 添加全局鼠标事件监听
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        const targetInfo = calculateTargetIndex(moveEvent.clientY);
-        console.log(targetInfo, moveEvent.clientY);
-        const targetIndex = targetInfo.index;
+      // 优化防抖机制：使用requestAnimationFrame + 时间间隔控制
+      let animationFrameId: number | null = null;
+      let lastUpdateTime = 0;
+      const UPDATE_INTERVAL = 16; // 约60fps，与浏览器刷新率匹配
 
-        // 正确计算拖拽预览位置（相对于编辑区域容器）
-        let previewTop = 0;
-        if (editAreaRef.current) {
-          const rect = editAreaRef.current.getBoundingClientRect();
-          previewTop = moveEvent.clientY - rect.top - dragPreviewHeight / 2 + scrollTop;
-          // 限制预览元素在编辑区域内
-          previewTop = Math.max(0, Math.min(previewTop, rect.height - dragPreviewHeight));
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const currentTime = Date.now();
+        
+        // 取消之前的动画帧，确保只执行最新的更新
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
         }
 
-        // 更新目标位置和插入线显示
-        setDragState((prev) => ({
-          ...prev,
-          targetIndex,
-          placeholderIndex: targetIndex > rowIndex ? targetIndex - 1 : targetIndex,
-          insertionLine: {
-            visible: targetIndex !== -1 && targetIndex !== rowIndex,
-            position: targetInfo.position,
-            index: targetIndex,
-          },
-          dragPreview: {
-            ...prev.dragPreview,
-            top: previewTop,
-          },
-        }));
+        // 使用requestAnimationFrame确保与浏览器渲染同步
+        animationFrameId = requestAnimationFrame(() => {
+          // 检查时间间隔，控制更新频率
+          if (currentTime - lastUpdateTime >= UPDATE_INTERVAL) {
+            const targetInfo = calculateTargetIndex(moveEvent.clientY);
+            const targetIndex = targetInfo.index;
+
+            // 正确计算拖拽预览位置（相对于编辑区域容器）
+            let previewTop = 0;
+            if (editAreaRef.current) {
+              const rect = editAreaRef.current.getBoundingClientRect();
+              previewTop = moveEvent.clientY - rect.top - dragPreviewHeight / 2 + scrollTop;
+              // 限制预览元素在编辑区域内
+              previewTop = Math.max(0, Math.min(previewTop, rect.height - dragPreviewHeight));
+            }
+
+            // 使用setTimeout延迟状态更新，避免在渲染过程中更新状态
+            setTimeout(() => {
+              setDragState((prev) => {
+                if (prev.targetIndex === targetIndex && prev.dragPreview.top === previewTop) {
+                  return prev; // 状态未变化，避免不必要的重渲染
+                }
+
+                return {
+                  ...prev,
+                  targetIndex,
+                  placeholderIndex: targetIndex > rowIndex ? targetIndex - 1 : targetIndex,
+                  insertionLine: {
+                    visible: targetIndex !== -1 && targetIndex !== rowIndex,
+                    position: 'top',
+                    index: targetIndex,
+                  },
+                  dragPreview: {
+                    ...prev.dragPreview,
+                    top: previewTop,
+                  },
+                };
+              });
+            }, 0);
+
+            lastUpdateTime = currentTime;
+          }
+          animationFrameId = null;
+        });
       };
 
       const handleMouseUp = () => {
+        // 清理动画帧
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+
         // 使用函数式更新获取最新状态
         setDragState((prevState) => {
           const { draggedIndex, targetIndex, insertionLine, originalData, draggedRow } = prevState;
 
+          // 只有当目标位置有效且与当前节点不同时才进行插入操作
           if (targetIndex !== -1 && targetIndex !== draggedIndex) {
-            // 根据插入位置调整目标索引
-            let adjustedTargetIndex = targetIndex;
-            if (insertionLine.position === 'bottom' && targetIndex < editorData.length) {
-              // 插入到当前行下方，需要插入到下一行位置
-              adjustedTargetIndex = targetIndex;
-            } else {
-              // 插入到当前行上方时，目标索引保持不变
-              adjustedTargetIndex = Math.max(0, targetIndex - 1);
-            }
+            // 由于现在统一使用top位置，目标索引就是实际要插入的位置
+            // 不需要再根据position调整索引
+            const adjustedTargetIndex = targetIndex;
 
             // 成功插入：重新排序数据
             const newData = reorderRows(editorData, draggedIndex, adjustedTargetIndex);
             setEditorData(newData);
             onRowDragEnd?.({ row: draggedRow!, editorData: newData });
           } else {
-            // 未成功插入：恢复到原始位置
+            // 未成功插入或插入位置与当前节点相同：恢复到原始位置
             setEditorData(originalData);
           }
 
@@ -432,22 +472,13 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
                     background: '#4a90e2',
                     zIndex: 1000,
                     pointerEvents: 'none',
-                    top:
-                      dragState.insertionLine.position === 'top'
-                        ? (() => {
-                            let top = 0;
-                            for (let i = 0; i < dragState.insertionLine.index; i++) {
-                              top += editorData[i]?.rowHeight || rowHeight;
-                            }
-                            return top;
-                          })()
-                        : (() => {
-                            let top = 0;
-                            for (let i = 0; i <= dragState.insertionLine.index; i++) {
-                              top += editorData[i]?.rowHeight || rowHeight;
-                            }
-                            return top - 2;
-                          })(),
+                    top: (() => {
+                      let top = 0;
+                      for (let i = 0; i < dragState.insertionLine.index; i++) {
+                        top += editorData[i]?.rowHeight || rowHeight;
+                      }
+                      return top;
+                    })(),
                   }}
                 />
               )}
