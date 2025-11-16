@@ -35,7 +35,7 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
     },
     ref,
   ) => {
-    const interactable = useRef<Interactable>();
+    const interactable = useRef<Interactable | null>(null);
     const deltaX = useRef(0);
     const isAdsorption = useRef(false);
     const { initAutoScroll, dealDragAutoScroll, dealResizeAutoScroll, stopAutoScroll } = useAutoScroll(parentRef);
@@ -54,7 +54,7 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
       getWidth: handleGetWidth,
     }));
     useEffect(() => {
-      const target = interactable.current.target as HTMLElement;
+      const target = interactable.current?.target as HTMLElement;
       handleUpdateWidth(typeof width === 'undefined' ? target.offsetWidth : width, false);
     }, [width]);
     useEffect(() => {
@@ -76,11 +76,11 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
       Object.assign(target.dataset, { width });
     };
     const handleGetLeft = () => {
-      const target = interactable.current.target as HTMLElement;
+      const target = interactable.current?.target as HTMLElement;
       return parseFloat(target?.dataset?.left || '0');
     };
     const handleGetWidth = () => {
-      const target = interactable.current.target as HTMLElement;
+      const target = interactable.current?.target as HTMLElement;
       return parseFloat(target?.dataset?.width || '0');
     };
     //#endregion
@@ -152,8 +152,8 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
           deltaScrollLeft(delta);
 
           let { left, width } = target.dataset;
-          const preLeft = parseFloat(left);
-          const preWidth = parseFloat(width);
+          const preLeft = parseFloat(left || '0');
+          const preWidth = parseFloat(width || '0');
           deltaX.current += delta;
           move({ preLeft, preWidth, scrollDelta: delta });
         });
@@ -161,8 +161,8 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
       }
 
       let { left, width } = target.dataset;
-      const preLeft = parseFloat(left);
-      const preWidth = parseFloat(width);
+      const preLeft = parseFloat(left || '0');
+      const preWidth = parseFloat(width || '0');
 
       deltaX.current += e.dx;
       move({ preLeft, preWidth });
@@ -175,7 +175,7 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
 
       const target = e.target;
       let { left, width } = target.dataset;
-      onDragEnd && onDragEnd({ left: parseFloat(left), width: parseFloat(width) });
+      onDragEnd && onDragEnd({ left: parseFloat(left || '0'), width: parseFloat(width || '0') });
     };
 
     const handleResizeStart = (e: ResizeEvent) => {
@@ -292,8 +292,8 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
           deltaScrollLeft(delta);
 
           let { left, width } = target.dataset;
-          const preLeft = parseFloat(left);
-          const preWidth = parseFloat(width);
+          const preLeft = parseFloat(left || '0');
+          const preWidth = parseFloat(width || '0');
           deltaX.current += delta;
           resize({ preLeft, preWidth, dir });
         });
@@ -301,10 +301,10 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
       }
 
       let { left, width } = target.dataset;
-      const preLeft = parseFloat(left);
-      const preWidth = parseFloat(width);
+      const preLeft = parseFloat(left || '0');
+      const preWidth = parseFloat(width || '0');
 
-      deltaX.current += dir === 'left' ? e.deltaRect.left : e.deltaRect.right;
+      deltaX.current += dir === 'left' ? e.deltaRect?.left || 0 : e.deltaRect?.right || 0;
       resize({ preLeft, preWidth, dir });
     };
     const handleResizeStop = (e: ResizeEvent) => {
@@ -317,8 +317,8 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
       let dir: Direction = e.edges?.right ? 'right' : 'left';
       onResizeEnd &&
         onResizeEnd(dir, {
-          left: parseFloat(left),
-          width: parseFloat(width),
+          left: parseFloat(left || '0'),
+          width: parseFloat(width || '0'),
         });
     };
     //#endregion
@@ -334,7 +334,7 @@ export const RowDnd = React.forwardRef<RowRndApi, RowRndProps>(
           onstart: handleMoveStart,
           onend: handleMoveStop,
           cursorChecker: () => {
-            return null;
+            return '';
           },
         }}
         resizableOptions={{

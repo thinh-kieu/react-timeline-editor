@@ -1,12 +1,8 @@
+import { Emitter, EventTypes, ITimelineEngine } from '@xzdarcy/timeline-engine';
 import React, { ReactNode } from 'react';
 import { OnScrollParams } from 'react-virtualized';
-import { ITimelineEngine } from '..';
-import { Emitter } from '../engine/emitter';
-import { EventTypes } from '../engine/events';
-import { TimelineAction, TimelineRow } from './action';
-import { TimelineEffect } from './effect';
-export * from './action';
-export * from './effect';
+import { TimelineAction, TimelineRow } from '@xzdarcy/timeline-engine';
+import { TimelineEffect } from '@xzdarcy/timeline-engine';
 
 export interface EditData {
   /**
@@ -72,6 +68,11 @@ export interface EditData {
    * @default false
    */
   disableDrag?: boolean;
+  /**
+   * @description 禁止全部Row的拖动
+   * @default false
+   */
+  disableRowDrag?: boolean;
   /**
    * @description timeline运行器，不传则使用内置运行器
    */
@@ -202,11 +203,22 @@ export interface EditData {
    * @description 点击时间区域事件, 返回false时阻止设置时间
    */
   onClickTimeArea?: (time: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => boolean | undefined;
+  /**
+   * @description 行拖拽回调开始
+   * @param params row为被拖拽的行数据
+   */
+  onRowDragStart?: (params: { row: TimelineRow }) => void;
+  /**
+   * @description 行拖拽回调结束
+   * @param params row为被拖拽的行数据；editorData为row被拖拽后，新的数据排列
+   * @returns
+   */
+  onRowDragEnd?: (params: { row: TimelineRow; editorData: TimelineRow[] }) => void;
 }
 
 export interface TimelineState {
   /** dom节点 */
-  target: HTMLElement;
+  target: HTMLElement | null;
   /** 运行监听器 */
   listener: Emitter<EventTypes>;
   /** 是否正在播放 */
@@ -274,3 +286,10 @@ export interface TimelineEditor extends EditData {
    */
   onChange?: (editorData: TimelineRow[]) => void | boolean;
 }
+
+// 定义一个工具类型，将指定属性变为必选
+export type RequiredPick<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
+export type RequiredEditData = RequiredPick<EditData, 'editorData' | 'effects' | 'scale' | 'scaleSplitCount' | 'scaleWidth' | 'startLeft' | 'minScaleCount' | 'maxScaleCount' | 'rowHeight'>;
+
+export type RequiredTimelineEditor = RequiredPick<TimelineEditor, 'scrollTop'> & RequiredEditData;

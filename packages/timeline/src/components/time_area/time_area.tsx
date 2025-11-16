@@ -1,8 +1,8 @@
-import { parserPixelToTime } from '@/utils/deal_data';
-import React, { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useRef } from 'react';
 import { AutoSizer, Grid, GridCellRenderer, OnScrollParams } from 'react-virtualized';
 import { CommonProp } from '../../interface/common_prop';
 import { prefix } from '../../utils/deal_class_prefix';
+import { parserPixelToTime } from '../../utils/deal_data';
 import './time_area.less';
 
 /** 动画时间轴组件参数 */
@@ -17,7 +17,7 @@ export type TimeAreaProps = CommonProp & {
 
 /** 动画时间轴组件 */
 export const TimeArea: FC<TimeAreaProps> = ({ setCursor, maxScaleCount, hideCursor, scale, scaleWidth, scaleCount, scaleSplitCount, startLeft, scrollLeft, onClickTimeArea, getScaleRender }) => {
-  const gridRef = useRef<Grid>();
+  const gridRef = useRef<Grid>(null);
   /** 是否显示细分刻度 */
   const showUnit = scaleSplitCount > 0;
 

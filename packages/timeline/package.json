@@ -1,6 +1,6 @@
 {
   "name": "@xzdarcy/react-timeline-editor",
-  "version": "0.1.9",
+  "version": "0.1.10-alpha.2a04218ac",
   "author": "xzdarcy",
   "license": "MIT",
   "keywords": [
@@ -19,15 +19,16 @@
     "url": "git+https://github.com/xzdarcy/react-timeline-editor.git"
   },
   "scripts": {
-    "build": "vite build",
-    "prepublishOnly": "npm run build"
+    "build": "npm run clean && vite build",
+    "clean": "rm -rf dist"
   },
   "files": [
+    "src",
     "dist"
   ],
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.es.js",
-  "typings": "dist/index.d.ts",
+  "main": "src/index.tsx",
+  "module": "src/index.tsx",
+  "typings": "src/index.tsx",
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
@@ -35,12 +36,12 @@
   "dependencies": {
     "@interactjs/types": "^1.10.11",
     "@types/react-virtualized": "^9.21.14",
+    "@xzdarcy/timeline-engine": "workspace:^",
     "framework-utils": "^1.1.0",
     "interactjs": "^1.10.11",
     "react-virtualized": "^9.22.3"
   },
   "devDependencies": {
-    "@types/howler": "^2.2.4",
     "@types/lodash": "^4.14.177",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
@@ -61,10 +62,11 @@
     "USE_SRC": [
       null,
       {
-        "main": "dist/index.cjs.js",
+        "main": "dist/index.es.js",
         "module": "dist/index.es.js",
         "typings": "dist/index.d.ts"
       }
     ]
-  }
+  },
+  "stableVersion": "0.1.9"
 }

@@ -1,5 +1,5 @@
 import React, { FC, useLayoutEffect, useRef, useState } from 'react';
-import { TimelineAction, TimelineRow } from '../../interface/action';
+import { TimelineAction, TimelineRow } from '@xzdarcy/timeline-engine';
 import { CommonProp } from '../../interface/common_prop';
 import { DEFAULT_ADSORPTION_DISTANCE, DEFAULT_MOVE_GRID } from '../../interface/const';
 import { prefix } from '../../utils/deal_class_prefix';
@@ -15,7 +15,7 @@ export type EditActionProps = CommonProp & {
   dragLineData: DragLineData;
   setEditorData: (params: TimelineRow[]) => void;
   handleTime: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => number;
-  areaRef: React.MutableRefObject<HTMLDivElement>;
+  areaRef: React.RefObject<HTMLDivElement>;
   /** 设置scroll left */
   deltaScrollLeft?: (delta: number) => void;
 };
@@ -54,7 +54,7 @@ export const EditAction: FC<EditActionProps> = ({
   areaRef,
   deltaScrollLeft,
 }) => {
-  const rowRnd = useRef<RowRndApi>();
+  const rowRnd = useRef<RowRndApi>(null);
   const isDragWhenClick = useRef(false);
   const { id, maxEnd, minStart, end, start, selected, flexible = true, movable = true, effectId } = action;
 
@@ -123,8 +123,10 @@ export const EditAction: FC<EditActionProps> = ({
     const { start, end } = parserTransformToTime({ left, width }, { scaleWidth, scale, startLeft });
 
     // 设置数据
-    const rowItem = editorData.find((item) => item.id === row.id);
-    const action = rowItem.actions.find((item) => item.id === id);
+    const rowItem = editorData.find((item: TimelineRow) => item.id === row.id);
+    if (!rowItem) return;
+    const action = rowItem.actions.find((item: TimelineAction) => item.id === id);
+    if (!action) return;
     action.start = start;
     action.end = end;
     setEditorData(editorData);
@@ -153,8 +155,10 @@ export const EditAction: FC<EditActionProps> = ({
     const { start, end } = parserTransformToTime({ left, width }, { scaleWidth, scale, startLeft });
 
     // 设置数据
-    const rowItem = editorData.find((item) => item.id === row.id);
-    const action = rowItem.actions.find((item) => item.id === id);
+    const rowItem = editorData.find((item: TimelineRow) => item.id === row.id);
+    if (!rowItem) return;
+    const action = rowItem.actions.find((item: TimelineAction) => item.id === id);
+    if (!action) return;
     action.start = start;
     action.end = end;
     setEditorData(editorData);
@@ -210,7 +214,7 @@ export const EditAction: FC<EditActionProps> = ({
           isDragWhenClick.current = false;
         }}
         onClick={(e) => {
-          let time: number;
+          let time: number | undefined;
           if (onClickAction) {
             time = handleTime(e);
             onClickAction(e, { row, action, time: time });

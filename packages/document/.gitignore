@@ -1,4 +1,14 @@
-.dumi/tmp
-.dumi/tmp-test
-.dumi/tmp-production
-.env.local
+# Local
+.DS_Store
+*.local
+*.log*
+
+# Dist
+node_modules
+dist/
+doc_build/
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea

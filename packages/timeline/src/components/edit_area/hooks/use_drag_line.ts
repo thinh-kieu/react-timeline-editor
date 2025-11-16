@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TimelineAction, TimelineRow } from "../../../interface/action";
+import { TimelineAction, TimelineRow } from "@xzdarcy/timeline-engine";
 import { parserActionsToPositions, parserTimeToTransform } from "../../../utils/deal_data";
 import { DragLineData } from "../drag_lines";
 
@@ -22,7 +22,7 @@ export function useDragLine() {
     const otherActions: TimelineAction[] = [];
     if (assistActionIds) {
       editorData.forEach((rowItem) => {
-        rowItem.actions.forEach((actionItem) => {
+        rowItem.actions.forEach((actionItem: TimelineAction) => {
           if (assistActionIds.includes(actionItem.id)) otherActions.push(actionItem);
         });
       });
@@ -31,7 +31,7 @@ export function useDragLine() {
         if (rowItem.id !== row.id) {
           otherActions.push(...rowItem.actions);
         } else {
-          rowItem.actions.forEach((actionItem) => {
+          rowItem.actions.forEach((actionItem: TimelineAction) => {
             if (actionItem.id !== action.id) otherActions.push(actionItem);
           });
         }

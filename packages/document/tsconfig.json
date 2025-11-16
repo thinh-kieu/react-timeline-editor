@@ -1,16 +1,22 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "importHelpers": true,
-    "jsx": "react",
-    "baseUrl": "./",
-    "strict": false,
-    "allowSyntheticDefaultImports": true,
-    "paths": {
-      "@@/*": ["./.dumi/tmp/*"],
-      "@xzdarcy/react-timeline-editor": ["../timeline/src/index.tsx"]
-    },
+    "target": "ES2020",
+    "lib": ["DOM", "ES2020"],
+    "types": ["react"],
+    "module": "ESNext",
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "useDefineForClassFields": true,
+    "allowImportingTsExtensions": true
   },
+  "include": ["docs", "src", "theme", "rspress.config.ts"],
+  "references": [{ "path": "./plugins/plugin-preview/static/tsconfig.json" }],
+  "mdx": {
+    "checkMdx": true
+  }
 }
