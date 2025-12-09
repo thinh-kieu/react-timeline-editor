@@ -18,8 +18,6 @@ export function checkProps(props: TimelineEditor): TimelineEditor {
     cursorMaxTime = Infinity,
     timelineMaxTime = Infinity,
   } = props;
-  cursorMaxTime = Number(cursorMaxTime);
-  timelineMaxTime = Number(timelineMaxTime);
 
   if(scale <= 0) {
     logger.error('Error: scale must be greater than 0!')

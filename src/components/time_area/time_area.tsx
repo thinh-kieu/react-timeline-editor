@@ -16,30 +16,12 @@ export type TimeAreaProps = CommonProp & {
 };
 
 /** 动画时间轴组件 */
-export const TimeArea: FC<TimeAreaProps> = ({
-  setCursor,
-  hideCursor,
-  scale,
-  scaleWidth,
-  scaleCount,
-  scaleSplitCount,
-  startLeft,
-  scrollLeft,
-  cursorMaxTime,
-  timelineMaxTime,
-  onClickTimeArea,
-  getScaleRender,
-}) => {
+export const TimeArea: FC<TimeAreaProps> = ({ setCursor, hideCursor, scale, scaleWidth, scaleCount, scaleSplitCount, startLeft, scrollLeft, timelineMaxTime, onClickTimeArea, getScaleRender }) => {
   const gridRef = useRef<Grid>();
   /** 是否显示细分刻度 */
   const showUnit = scaleSplitCount > 0;
   const parsedTimelineMaxTime = Number(timelineMaxTime);
-  const parsedCursorMaxTime = Number(cursorMaxTime);
-  const limitTime = Number.isFinite(parsedTimelineMaxTime)
-    ? parsedTimelineMaxTime
-    : Number.isFinite(parsedCursorMaxTime)
-    ? parsedCursorMaxTime
-    : Infinity;
+  const limitTime = Number.isFinite(parsedTimelineMaxTime) ? parsedTimelineMaxTime : Infinity;
   const maxPixel = Number.isFinite(limitTime) ? parserTimeToPixel(limitTime, { startLeft, scale, scaleWidth }) : Infinity;
   const totalColumns = showUnit ? scaleCount * scaleSplitCount + 1 : scaleCount;
 
@@ -98,9 +80,11 @@ export const TimeArea: FC<TimeAreaProps> = ({
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                   const position = e.clientX - rect.x;
                   const left = Math.max(position + scrollLeft, startLeft);
+
                   const totalWidth = scaleCount * scaleWidth + startLeft - scrollLeft;
                   const maxScaleWidth = Number.isFinite(maxPixel) ? maxPixel : totalWidth;
                   if (left > maxScaleWidth) return;
+
                   const maxLeftByCursor = Number.isFinite(limitTime) && limitTime > 0 ? maxPixel : Infinity;
                   const safeLeft = Math.min(left, maxLeftByCursor);
 

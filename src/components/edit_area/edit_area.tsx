@@ -40,8 +40,6 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
     scale,
     hideCursor,
     cursorTime,
-    cursorMaxTime,
-    timelineMaxTime,
     onScroll,
     dragLine,
     getAssistDragLineActionIds,
@@ -52,13 +50,6 @@ export const EditArea = React.forwardRef<EditAreaState, EditAreaProps>((props, r
     onActionResizeStart,
     onActionResizing,
   } = props;
-  const parsedTimelineMaxTime = Number(timelineMaxTime);
-  const parsedCursorMaxTime = Number(cursorMaxTime);
-  const limitTime = Number.isFinite(parsedTimelineMaxTime)
-    ? parsedTimelineMaxTime
-    : Number.isFinite(parsedCursorMaxTime)
-    ? parsedCursorMaxTime
-    : Infinity;
   const { dragLineData, initDragLine, updateDragLine, disposeDragLine, defaultGetAssistPosition, defaultGetMovePosition } = useDragLine();
   const editAreaRef = useRef<HTMLDivElement>();
   const gridRef = useRef<Grid>();
