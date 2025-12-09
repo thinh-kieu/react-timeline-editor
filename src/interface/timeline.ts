@@ -202,6 +202,8 @@ export interface EditData {
    * @description 点击时间区域事件, 返回false时阻止设置时间
    */
   onClickTimeArea?: (time: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => boolean | undefined;
+
+  cursorMaxTime?: number;
 }
 
 export interface TimelineState {

@@ -1,4 +1,4 @@
-import { parserPixelToTime } from '@/utils/deal_data';
+import { parserPixelToTime, parserTimeToPixel } from '@/utils/deal_data';
 import React, { FC, useEffect, useRef } from 'react';
 import { AutoSizer, Grid, GridCellRenderer, OnScrollParams } from 'react-virtualized';
 import { CommonProp } from '../../interface/common_prop';
@@ -16,7 +16,20 @@ export type TimeAreaProps = CommonProp & {
 };
 
 /** 动画时间轴组件 */
-export const TimeArea: FC<TimeAreaProps> = ({ setCursor, maxScaleCount, hideCursor, scale, scaleWidth, scaleCount, scaleSplitCount, startLeft, scrollLeft, onClickTimeArea, getScaleRender }) => {
+export const TimeArea: FC<TimeAreaProps> = ({
+  setCursor,
+  maxScaleCount,
+  hideCursor,
+  scale,
+  scaleWidth,
+  scaleCount,
+  scaleSplitCount,
+  startLeft,
+  scrollLeft,
+  cursorMaxTime,
+  onClickTimeArea,
+  getScaleRender,
+}) => {
   const gridRef = useRef<Grid>();
   /** 是否显示细分刻度 */
   const showUnit = scaleSplitCount > 0;
@@ -76,8 +89,13 @@ export const TimeArea: FC<TimeAreaProps> = ({ setCursor, maxScaleCount, hideCurs
                   const position = e.clientX - rect.x;
                   const left = Math.max(position + scrollLeft, startLeft);
                   if (left > maxScaleCount * scaleWidth + startLeft - scrollLeft) return;
+                  const maxLeftByCursor =
+                    Number.isFinite(cursorMaxTime) && cursorMaxTime > 0
+                      ? parserTimeToPixel(cursorMaxTime, { startLeft, scale, scaleWidth })
+                      : Infinity;
+                  const safeLeft = Math.min(left, maxLeftByCursor);
 
-                  const time = parserPixelToTime(left, { startLeft, scale, scaleWidth });
+                  const time = parserPixelToTime(safeLeft, { startLeft, scale, scaleWidth });
                   const result = onClickTimeArea && onClickTimeArea(time, e);
                   if (result === false) return; // 返回false时阻止设置时间
                   setCursor({ time });

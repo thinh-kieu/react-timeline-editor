@@ -33,6 +33,7 @@ export const Cursor: FC<CursorProps> = ({
   scrollSync,
   areaRef,
   maxScaleCount,
+  cursorMaxTime,
   deltaScrollLeft,
   onCursorDragStart,
   onCursorDrag,
@@ -40,6 +41,10 @@ export const Cursor: FC<CursorProps> = ({
 }) => {
   const rowRnd = useRef<RowRndApi>();
   const draggingLeft = useRef<undefined | number>();
+  const getMaxCursorLeft = (currentScrollLeft: number) => {
+    if (typeof cursorMaxTime !== 'number' || !Number.isFinite(cursorMaxTime)) return Infinity;
+    return parserTimeToPixel(cursorMaxTime, { startLeft, scaleWidth, scale }) - currentScrollLeft;
+  };
 
   useEffect(() => {
     if (typeof draggingLeft.current === 'undefined') {
@@ -48,6 +53,8 @@ export const Cursor: FC<CursorProps> = ({
     }
   }, [cursorTime, startLeft, scaleWidth, scale, scrollLeft]);
 
+  const maxCursorLeft = getMaxCursorLeft(scrollLeft);
+
   return (
     <RowDnd
       start={startLeft}
@@ -55,37 +62,48 @@ export const Cursor: FC<CursorProps> = ({
       parentRef={areaRef}
       bounds={{
         left: 0,
-        right: Math.min(timelineWidth, maxScaleCount * scaleWidth + startLeft - scrollLeft),
+        right: Math.min(timelineWidth, maxScaleCount * scaleWidth + startLeft - scrollLeft, maxCursorLeft),
       }}
       deltaScrollLeft={deltaScrollLeft}
       enableDragging={!disableDrag}
       enableResizing={false}
       onDragStart={() => {
         onCursorDragStart && onCursorDragStart(cursorTime);
-        draggingLeft.current = parserTimeToPixel(cursorTime, { startLeft, scaleWidth, scale }) - scrollLeft;
+        const currentScrollLeft = scrollSync.current.state.scrollLeft;
+        const currentMaxLeft = getMaxCursorLeft(currentScrollLeft);
+        const currentLeft = parserTimeToPixel(cursorTime, { startLeft, scaleWidth, scale }) - currentScrollLeft;
+        draggingLeft.current = Math.min(currentLeft, currentMaxLeft);
         rowRnd.current.updateLeft(draggingLeft.current);
       }}
       onDragEnd={() => {
-        const time = parserPixelToTime(draggingLeft.current + scrollLeft, { startLeft, scale, scaleWidth });
+        const currentScrollLeft = scrollSync.current.state.scrollLeft;
+        const currentMaxLeft = getMaxCursorLeft(currentScrollLeft);
+        if (Number.isFinite(currentMaxLeft)) {
+          draggingLeft.current = Math.min(draggingLeft.current, currentMaxLeft);
+          rowRnd.current.updateLeft(draggingLeft.current);
+        }
+        const time = parserPixelToTime(draggingLeft.current + currentScrollLeft, { startLeft, scale, scaleWidth });
         setCursor({ time });
         onCursorDragEnd && onCursorDragEnd(time);
         draggingLeft.current = undefined;
       }}
       onDrag={({ left }, scroll = 0) => {
-        const scrollLeft = scrollSync.current.state.scrollLeft;
+        const currentScrollLeft = scrollSync.current.state.scrollLeft;
+        const currentMaxLeft = getMaxCursorLeft(currentScrollLeft);
 
-        if (!scroll || scrollLeft === 0) {
+        if (!scroll || currentScrollLeft === 0) {
           // 拖拽时，如果当前left < left min，将数值设置为 left min
-          if (left < startLeft - scrollLeft) draggingLeft.current = startLeft - scrollLeft;
+          if (left < startLeft - currentScrollLeft) draggingLeft.current = startLeft - currentScrollLeft;
           else draggingLeft.current = left;
         } else {
           // 自动滚动时，如果当前left < left min，将数值设置为 left min
-          if (draggingLeft.current < startLeft - scrollLeft - scroll) {
-            draggingLeft.current = startLeft - scrollLeft - scroll;
+          if (draggingLeft.current < startLeft - currentScrollLeft - scroll) {
+            draggingLeft.current = startLeft - currentScrollLeft - scroll;
           }
         }
+        if (Number.isFinite(currentMaxLeft)) draggingLeft.current = Math.min(draggingLeft.current, currentMaxLeft);
         rowRnd.current.updateLeft(draggingLeft.current);
-        const time = parserPixelToTime(draggingLeft.current + scrollLeft, { startLeft, scale, scaleWidth });
+        const time = parserPixelToTime(draggingLeft.current + currentScrollLeft, { startLeft, scale, scaleWidth });
         setCursor({ time });
         onCursorDrag && onCursorDrag(time);
         return false;
