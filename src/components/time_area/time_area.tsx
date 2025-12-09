@@ -18,7 +18,6 @@ export type TimeAreaProps = CommonProp & {
 /** 动画时间轴组件 */
 export const TimeArea: FC<TimeAreaProps> = ({
   setCursor,
-  maxScaleCount,
   hideCursor,
   scale,
   scaleWidth,
@@ -27,12 +26,22 @@ export const TimeArea: FC<TimeAreaProps> = ({
   startLeft,
   scrollLeft,
   cursorMaxTime,
+  timelineMaxTime,
   onClickTimeArea,
   getScaleRender,
 }) => {
   const gridRef = useRef<Grid>();
   /** 是否显示细分刻度 */
   const showUnit = scaleSplitCount > 0;
+  const parsedTimelineMaxTime = Number(timelineMaxTime);
+  const parsedCursorMaxTime = Number(cursorMaxTime);
+  const limitTime = Number.isFinite(parsedTimelineMaxTime)
+    ? parsedTimelineMaxTime
+    : Number.isFinite(parsedCursorMaxTime)
+    ? parsedCursorMaxTime
+    : Infinity;
+  const maxPixel = Number.isFinite(limitTime) ? parserTimeToPixel(limitTime, { startLeft, scale, scaleWidth }) : Infinity;
+  const totalColumns = showUnit ? scaleCount * scaleSplitCount + 1 : scaleCount;
 
   /** 获取每个cell渲染内容 */
   const cellRenderer: GridCellRenderer = ({ columnIndex, key, style }) => {
@@ -40,9 +49,10 @@ export const TimeArea: FC<TimeAreaProps> = ({
     const classNames = ['time-unit'];
     if (isShowScale) classNames.push('time-unit-big');
     const item = (showUnit ? columnIndex / scaleSplitCount : columnIndex) * scale;
+    const isOverLimit = Number.isFinite(limitTime) && item > limitTime;
     return (
-      <div key={key} style={style} className={prefix(...classNames)}>
-        {isShowScale && <div className={prefix('time-unit-scale')}>{getScaleRender ? getScaleRender(item) : item}</div>}
+      <div key={key} style={isOverLimit ? { ...style, borderRight: 'none' } : style} className={prefix(...classNames)}>
+        {!isOverLimit && isShowScale && <div className={prefix('time-unit-scale')}>{getScaleRender ? getScaleRender(item) : item}</div>}
       </div>
     );
   };
@@ -69,7 +79,7 @@ export const TimeArea: FC<TimeAreaProps> = ({
             <>
               <Grid
                 ref={gridRef}
-                columnCount={showUnit ? scaleCount * scaleSplitCount + 1 : scaleCount}
+                columnCount={totalColumns}
                 columnWidth={getColumnWidth}
                 estimatedColumnSize={estColumnWidth}
                 rowCount={1}
@@ -88,11 +98,10 @@ export const TimeArea: FC<TimeAreaProps> = ({
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                   const position = e.clientX - rect.x;
                   const left = Math.max(position + scrollLeft, startLeft);
-                  if (left > maxScaleCount * scaleWidth + startLeft - scrollLeft) return;
-                  const maxLeftByCursor =
-                    Number.isFinite(cursorMaxTime) && cursorMaxTime > 0
-                      ? parserTimeToPixel(cursorMaxTime, { startLeft, scale, scaleWidth })
-                      : Infinity;
+                  const totalWidth = scaleCount * scaleWidth + startLeft - scrollLeft;
+                  const maxScaleWidth = Number.isFinite(maxPixel) ? maxPixel : totalWidth;
+                  if (left > maxScaleWidth) return;
+                  const maxLeftByCursor = Number.isFinite(limitTime) && limitTime > 0 ? maxPixel : Infinity;
                   const safeLeft = Math.min(left, maxLeftByCursor);
 
                   const time = parserPixelToTime(safeLeft, { startLeft, scale, scaleWidth });

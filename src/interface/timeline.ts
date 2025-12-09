@@ -204,6 +204,8 @@ export interface EditData {
   onClickTimeArea?: (time: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => boolean | undefined;
 
   cursorMaxTime?: number;
+
+  timelineMaxTime?: number;
 }
 
 export interface TimelineState {
