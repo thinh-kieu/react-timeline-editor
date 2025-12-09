@@ -15,6 +15,8 @@ export function checkProps(props: TimelineEditor): TimelineEditor {
     minScaleCount = MIN_SCALE_COUNT,
     maxScaleCount = Infinity,
     rowHeight = DEFAULT_ROW_HEIGHT,
+    cursorMaxTime = Infinity,
+    timelineMaxTime = Infinity,
   } = props;
 
   if(scale <= 0) {
@@ -59,6 +61,15 @@ export function checkProps(props: TimelineEditor): TimelineEditor {
     rowHeight = DEFAULT_ROW_HEIGHT
   }
 
+  if (cursorMaxTime <= 0) {
+    logger.warn('Warning: cursorMaxTime must be greater than 0!');
+    cursorMaxTime = Infinity;
+  }
+  if (timelineMaxTime <= 0) {
+    logger.warn('Warning: timelineMaxTime must be greater than 0!');
+    timelineMaxTime = Infinity;
+  }
+
   const temp = {...props};
   delete temp['style'];
   return {
@@ -73,5 +84,7 @@ export function checkProps(props: TimelineEditor): TimelineEditor {
     minScaleCount,
     maxScaleCount,
     rowHeight,
+    cursorMaxTime,
+    timelineMaxTime,
   }
 }

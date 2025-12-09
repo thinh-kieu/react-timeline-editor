@@ -202,6 +202,18 @@ export interface EditData {
    * @description 点击时间区域事件, 返回false时阻止设置时间
    */
   onClickTimeArea?: (time: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => boolean | undefined;
+
+  /**
+   * @description 光标在时间轴拖拽/点击时的限制，单位：秒，支持小数
+   * @default Infinity
+   */
+  cursorMaxTime?: number;
+
+  /**
+   * @description 时间区域刻度线显示的限制，仅影响刻度线显示，单位：秒，支持小数
+   * @default Infinity
+   */
+  timelineMaxTime?: number;
 }
 
 export interface TimelineState {

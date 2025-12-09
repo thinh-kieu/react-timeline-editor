@@ -4,7 +4,7 @@ import { ITimelineEngine, TimelineEngine } from '../engine/engine';
 import { MIN_SCALE_COUNT, PREFIX, START_CURSOR_TIME } from '../interface/const';
 import { TimelineEditor, TimelineRow, TimelineState } from '../interface/timeline';
 import { checkProps } from '../utils/check_props';
-import { getScaleCountByRows, parserPixelToTime, parserTimeToPixel } from '../utils/deal_data';
+import { getScaleCountByRows, parserPixelToTime } from '../utils/deal_data';
 import { Cursor } from './cursor/cursor';
 import { EditArea } from './edit_area/edit_area';
 import './timeline.less';
@@ -29,6 +29,7 @@ export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, 
     engine,
     autoReRender = true,
     onScroll: onScrollVertical,
+    cursorMaxTime,
   } = checkedProps;
 
   const engineRef = useRef<ITimelineEngine>(engine || new TimelineEngine());
@@ -88,11 +89,16 @@ export const Timeline = React.forwardRef<TimelineState, TimelineEditor>((props, 
   /** 处理光标 */
   const handleSetCursor = (param: { left?: number; time?: number; updateTime?: boolean }) => {
     let { left, time, updateTime = true } = param;
-    if (typeof left === 'undefined' && typeof time === 'undefined') return;
-
-    if (typeof time === 'undefined') {
-      if (typeof left === 'undefined') left = parserTimeToPixel(time, { startLeft, scale, scaleWidth });
+    if (typeof time === 'undefined' && typeof left === 'undefined') return;
+    if (typeof time === 'undefined' && typeof left !== 'undefined') {
       time = parserPixelToTime(left, { startLeft, scale, scaleWidth });
+    }
+    const maxTime = Number.isFinite(cursorMaxTime) ? cursorMaxTime : Infinity;
+    const nextTime = Math.max(0, time ?? 0);
+    time = Math.min(nextTime, maxTime);
+    if (Number.isFinite(maxTime) && maxTime - time < 1e-6) {
+      // keep cursor exactly on the max when clamped
+      time = maxTime;
     }
 
     let result = true;
