@@ -24,7 +24,17 @@ export const InteractComp: FC<{
   useEffect(() => {
     interactable.current && interactable.current.unset();
     interactable.current = interact(nodeRef.current);
-    interactRef.current = interactable.current;
+    interactRef && (interactRef.current = interactable.current);
+    if (nodeRef.current) {
+      const { style } = nodeRef.current;
+      style.touchAction = 'none';
+      style.userSelect = 'none';
+      style.webkitUserSelect = 'none';
+      // vendor-prefixed touches
+      (style as any).msTouchAction = 'none';
+      style.setProperty('-ms-touch-action', 'none');
+      style.setProperty('-webkit-user-select', 'none');
+    }
     setInteractions();
   }, [draggable, resizable]);
 
